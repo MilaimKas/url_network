@@ -1,0 +1,36 @@
+# User Journey Network Visualization
+
+This project visualizes user journey networks using Flask (backend) and Cytoscape.js (frontend). It simulates or loads user navigation data, builds a network graph, and provides an interactive dashboard for exploration.
+
+It is a prototype that is thought as a collaborative project between data scientists and web developers to create a tool for analyzing user journeys on websites or applications.
+
+## Features
+- Interactive network visualization (Cytoscape.js)
+- Device and network type filtering
+- Shortest path highlighting between nodes
+- Weight threshold slider for edge filtering
+- Hover tooltips for nodes and edges
+
+## Setup
+1. Install Python dependencies:
+   ```bash
+   pip install flask flask-caching pandas numpy networkx scipy
+   ```
+2. Run the Flask app:
+   ```bash
+   python app.py
+   ```
+3. Open your browser at [http://localhost:5000](http://localhost:5000)
+
+## File Structure
+- `app.py` - Flask backend serving the API and dashboard
+- `app_helpers/` - Helper modules for data and network logic (backend)
+- `front_end/` or `static/` - Frontend files (HTML, JS, CSS)
+
+## Customization
+- Adjust data generation or connect to real data in `app_helpers/network_functions.py`
+- Modify network logic in `app_helpers/network_class.py`
+- Update frontend UI in `static/dashboard.html` and `static/network_logic.js`
+
+## License
+MIT License
