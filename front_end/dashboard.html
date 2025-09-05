@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>User Journey Network</title>
+
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    
+    <link rel="stylesheet" href="static/styles.css">
+
+</head>
+
+<body>
+    <div id="controls">
+        Device:
+        <select id="device-select">
+            <option value="desktop">Desktop</option>
+            <option value="mobile">Mobile</option>
+        </select>
+        Network:
+        <select id="network-type-select">
+            <option value="navigation">Navigation</option>
+            <option value="domain">Domain-only</option>
+        </select>
+        Weight Threshold:
+        <input type="range" id="weight-threshold" min="0" max="20" step="1" value="0">
+        <span id="threshold-value">0</span>
+        Clear Selection:
+        <button id="clear-selection">Clear Selection</button>
+    </div>
+    <div id="cy"></div>
+    <div id="info-box"></div>
+    <script src="static/network_logic.js"></script>
+</body>
+</html>
