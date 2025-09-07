@@ -25,7 +25,7 @@ It is a prototype that is thought as a collaborative project between data scient
 ## File Structure
 - `app.py` - Flask backend serving the API and dashboard
 - `app_helpers/` - Helper modules for data and network logic (backend)
-- `front_end/` or `static/` - Frontend files (HTML, JS, CSS)
+- `static/` - Frontend files (HTML, JS, CSS)
 
 ## Customization
 - Adjust data generation or connect to real data in `app_helpers/network_functions.py`
