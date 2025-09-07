@@ -1,0 +1,60 @@
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #000;  /* Will be behind the cytoscape canvas */
+}
+
+#controls {
+    padding: 16px 24px;
+    background: #111;
+    color: #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 8px;
+}
+
+#cy {
+    width: 100vw;
+    height: 85vh;  /* or 90vh depending on your layout */
+    display: block;
+    border: 1px solid #444;
+}
+
+#info-box {
+  position: absolute;
+  top: 100px;
+  right: 20px;
+  max-width: 300px;
+  background: rgba(101, 137, 87, 0.85);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1.4;
+  display: none;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#table-container {
+  padding: 12px;
+  background: #222;
+  color: #fff;
+  min-height: 200px;
+  overflow: auto;
+}
+
+#summary-table {
+  color: white !important;
+  background:  rgba(101, 137, 87, 0.85);
+  font-size: 18px;
+}
+
+#summary-table_wrapper {
+  overflow-x: auto;
+}
+
+
+
+
