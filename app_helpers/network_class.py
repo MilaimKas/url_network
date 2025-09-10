@@ -95,12 +95,12 @@ class WebNetwork:
         # get node position using domain network
         print("Calculating node positions for domain network...")
         self.pos = self.update_pos(**pos_kwargs)
-
+    
 
     # functions to update or change domain
     ####################################################################################################
 
-    def update_pos(self, method="energy", scale=10, **kwargs):
+    def update_pos(self, method="energy", scale=200, **kwargs):
         """
         using Fruchterman-Reingold force-directed algorithm to calculate nodes position using only the domain edges
         """
@@ -159,6 +159,38 @@ class WebNetwork:
     ####################################################################################################
 
     def create_navigation_graph(self, df=None):
+        self.current_navigation_network = self.create_network(df=df)
+        self.add_time_weight()
+
+    def build_graphs_by_date(self, date_col='date', time_granularity="Week"):
+        
+        if not 'date' in self.df.columns:
+            raise KeyError("Prodivided data frame must contain the column 'date'")
+        
+        # groupby date if needed
+        if time_granularity in ['Day', 'Week', 'Month']:
+            self.df['date'] = pd.to_datetime(self.df['date'])
+            if time_granularity == 'Day':
+                self.df['date'] = self.df['date'].dt.date
+            elif time_granularity == 'Week':
+                self.df['date'] = self.df['date'] - pd.to_timedelta(self.df['date'].dt.weekday, unit='d')
+                self.df['date'] = self.df['date'].dt.date
+            elif time_granularity == 'Month':
+                self.df['date'] = self.df['date'].dt.to_period('M').dt.to_timestamp().dt.date
+        else:
+            raise ValueError(f"time_granularity must be one of 'Day', 'Weel', 'Month', got {time_granularity}")
+
+        # build seperate graph for each time period
+        self.graphs_by_date = {}
+        for date, df_date in self.df.groupby(date_col):
+            G = self.create_network(df=df_date)
+            self.add_time_weight(G=G, df=df_date)
+            self.graphs_by_date[date] = G
+
+        # build global graph
+        self.create_navigation_graph()
+
+    def create_network(self, df=None, G=None):
         """
         create a new network object new_G based on list of urls
                 full_path: ["home", "forum", "tour", "tour-bla-bla-bla"] 
@@ -178,6 +210,9 @@ class WebNetwork:
         if df is None:
             df = self.df.copy()
         
+        if G is None:
+            G = nx.DiGraph()
+        
         if "url_node" not in df.columns:
             print("WARNING: DataFrame does not contain 'url_node' column, using 'url_path' to create it")
             # take last non-empty part of url_path as node
@@ -188,10 +223,12 @@ class WebNetwork:
             for i in range(len(path)-1):
                 u, v = path[i], path[i+1]
                 if u != v:
-                    if self.current_navigation_network.has_edge(u, v):
-                        self.current_navigation_network[u][v]['weight'] += 1
+                    if G.has_edge(u, v):
+                        G[u][v]['weight'] += 1
                     else:
-                        self.current_navigation_network.add_edge(u, v, weight=1)
+                        G.add_edge(u, v, weight=1)
+        
+        return G
 
     
     def add_time_weight(self, df=None, G=None):
@@ -502,14 +539,17 @@ class WebNetwork:
     def export_gml(self, path="GML/network.gml"):
         nx.write_gml(self.current_navigation_network, path, stringizer=None)
 
-    def to_cytoscape_json(self, node_size_range=(5, 20), edge_width_range=(0.1, 5), pos_kwargs={}):
+    def to_cytoscape_json(self, node_size_range=(5, 20), navigation_graph=None, edge_width_range=(0.1, 5)):
         """
         Export full graph (domain + navigation edges) for Cytoscape.
         """
 
         domain_graph = self.domain
-        navigation_graph = self.current_navigation_network
-        pos = self.update_pos(**pos_kwargs)
+        if navigation_graph is None:
+            navigation_graph = self.current_navigation_network
+        
+        # get positions
+        pos = self.pos
 
         # Compute node sizes and edge widths for navigation edges
         node_sizes_df = self.size_from_time(node_size_range[0], node_size_range[1])

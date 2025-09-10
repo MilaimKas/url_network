@@ -64,6 +64,13 @@ body {
   overflow-x: auto;
 }
 
+#date-control {
+  padding: 10px;
+  background-color: #222;
+  color: white;
+}
+
+
 
 
 

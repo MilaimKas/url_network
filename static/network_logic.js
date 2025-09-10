@@ -25,11 +25,34 @@ document.addEventListener("DOMContentLoaded", () => {
         ]
     });
 
+    let dateList = [];  // global
+    let currentDateIndex = -1;  // -1 means "no date filter"
+
+    fetch("/available-dates")
+        .then(res => res.json())
+        .then(data => {
+            dateList = data;
+            const slider = document.getElementById("date-slider");
+            slider.max = data.length - 1;
+            slider.value = data.length - 1;  // default: latest
+            document.getElementById("date-display").textContent = "All time";
+        });
+
+
     // === GRAPH LOAD ===
-    function loadGraph(device) {
-        fetch(`/graph?device=${device}`)
+    function loadGraph(device, date = null) {
+        let url = `/graph?device=${device}`;
+        if (date && date !== "All time") {
+            url += `&date=${date}`;
+        }
+
+        fetch(url)
             .then(res => res.json())
             .then(data => {
+                if (cy) {
+                    cy.destroy(); // 🔥 Prevent multiple instances
+                }
+
                 cy = cytoscape({
                     container: cyContainer,
                     elements: data.elements,
@@ -41,9 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 initializeEventHandlers();
                 setWeightThresholdSlider();
+                applyNetworkStyle();     // ✅ important
                 applyWeightThreshold(0);
             });
     }
+
+
 
     // === STYLE SETUP ===
     function getGraphStyle() {
@@ -250,6 +276,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    function applyNetworkStyle() {
+        if (!cy) return;
+        const opacity = currentNetworkType === "domain" ? 0.0 : 0.4;
+        cy.edges('[group="network"]').style({ 'opacity': opacity });
+    }
+
     function showEdgeInfo(edge) {
         const data = edge.data();
         infoBox.innerHTML = `
@@ -296,6 +328,25 @@ document.addEventListener("DOMContentLoaded", () => {
         infoBox.style.display = 'none';
         dataTable.clear().draw();
     });
+
+    document.getElementById("date-slider").addEventListener("input", (e) => {
+        const index = parseInt(e.target.value);
+        currentDateIndex = index;
+
+        const selected = dateList[index];
+
+        const dateDisplay = document.getElementById("date-display");
+        if (index === dateList.length - 1) {
+            dateDisplay.textContent = "All time";
+        } else {
+            dateDisplay.textContent = selected;
+        }
+
+        loadGraph(deviceSelector.value, selected);
+    });
+
+
+
 
     // === INITIALIZE ===
     loadGraph(deviceSelector.value);
