@@ -8,6 +8,9 @@ nx.from_pandas_edgelist(df, source = 'node1', target = 'node2', edge_attr = 'edg
 import networkx as nx
 
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+
 import pandas as pd
 import numpy as np
 
@@ -563,8 +566,15 @@ class WebNetwork:
                         )
 
 
-        # add edge and arrow widths and groups
+        # Normalize weights to 0-1 for color mapping
+        all_weights = [d["weight"] for d in G.edges.values()]
+        norm = mcolors.Normalize(vmin=min(all_weights), vmax=max(all_weights))
+        cmap_network = cm.get_cmap("Reds") 
+        cmap_domain = cm.get_cmap("Blues")  
+
+        # edge infos
         for edge in data["elements"]["edges"]:
+        # add edge and arrow widths and groups
             source = edge["data"]["source"]
             target = edge["data"]["target"]
             group = edge_widths_df.get("group", "domain").get((source, target), "domain")
@@ -576,6 +586,14 @@ class WebNetwork:
                                     f"<strong>{source} → {target}</strong><br>"
                                     f"Weight: {weight}"
                                 )
+            # add color gradient based on weight
+            if group == "network":
+                rgba = cmap_network(norm(weight))
+            else:
+                rgba = cmap_domain(norm(weight))
+            r, g, b, a = rgba  # a is already the normalized opacity from colormap
+            rgba_css = f"rgba({int(r*255)}, {int(g*255)}, {int(b*255)}, {a:.2f})"
+            edge["data"]["color"] = rgba_css
 
         return data
 
