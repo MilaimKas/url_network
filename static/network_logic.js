@@ -41,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 initializeEventHandlers();
                 setWeightThresholdSlider();
-                applyNetworkStyle();
                 applyWeightThreshold(0);
             });
     }
@@ -53,8 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 selector: 'node',
                 style: {
                     'label': 'data(id)',
-                    'background-color': '#00d8ff',
-                    'color': '#ffffff',
+                    'background-color': 'rgba(0, 216, 255, 1)',
+                    'color': 'rgba(255, 255, 255, 1)',
                     'text-valign': 'center',
                     'text-halign': 'center',
                     'font-size': '4px',
@@ -66,31 +65,31 @@ document.addEventListener("DOMContentLoaded", () => {
             {
                 selector: 'edge[group = "domain"]',
                 style: {
-                    'line-color': 'blue',
+                    'line-color': 'data(color)',
                     'width': 'data(width)',
                     'curve-style': 'bezier',
-                    'target-arrow-shape': 'vee',
+                    'target-arrow-shape': 'triangle',
                     'target-arrow-color': 'blue',
-                    'target-arrow-scale': 0.01,
-                    'opacity': 0.9
+                    'arrow-scale': 0.2,
+                    'target-arrow-fill': 'hollow'
                 }
             },
             {
                 selector: 'edge[group = "network"]',
                 style: {
-                    'line-color': 'red',
+                    'line-color': 'data(color)',
                     'width': 'data(width)',
                     'curve-style': 'bezier',
-                    'target-arrow-shape': 'vee',
+                    'target-arrow-shape': 'triangle',
                     'target-arrow-color': 'red',
-                    'target-arrow-scale': 0.01,
-                    'opacity': 0.5
+                    'target-arrow-fill': 'hollow',
+                    'arrow-scale': 0.2
                 }
             },
             {
                 selector: 'edge.highlighted',
                 style: {
-                    'line-color': '#00ff00',
+                    'line-color': 'rgba(0, 255, 0, 1)',
                     'width': 4,
                     'opacity': 1.0,
                     'z-index': 9999
@@ -100,14 +99,14 @@ document.addEventListener("DOMContentLoaded", () => {
             selector: 'node.hovered',
             style: {
                 'border-width': 6,
-                'border-color': 'hsla(56, 67%, 59%, 0.88)'
+                'border-color': 'rgba(52, 115, 70, 1)'
             }
             },
             {
             selector: 'node:selected',
             style: {
                 'border-width': 6,
-                'border-color': '#ffd700'
+                'border-color': 'rgba(237, 203, 6, 0.6)'
             }
             },
             {
@@ -115,13 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 style: { 'background-color': '#000000' }
             }
         ];
-    }
-
-    // control edge visibility based on network type
-    function applyNetworkStyle() {
-        if (!cy) return;
-        const opacity = currentNetworkType === "domain" ? 0.0 : 0.4;
-        cy.edges('[group="network"]').style({ 'opacity': opacity });
     }
 
     // control edge visibility based on weight threshold    

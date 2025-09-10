@@ -39,26 +39,30 @@
     <button id="clear-selection">Clear Selection</button>
   </div>
 
+<div id="main-content">
   <div id="cy"></div>
 
-  <div id="info-box"></div>
+  <div id="side-panel">
+    <div id="info-box"></div>
 
-  <div id="table-container" style="padding: 12px;">
-    <table id="summary-table" class="display compact" style="width: 100%;">
-      <thead>
-        <tr>
-          <th>Node</th>
-          <th>AvgAbs</th>
-          <th>Total</th>
-          <th>AvgRel</th>
-          <th>Flow</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div id="table-container">
+      <table id="summary-table" class="display compact" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Node</th>
+            <th>AvgAbs</th>
+            <th>Total</th>
+            <th>AvgRel</th>
+            <th>Flow</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
+</div>
 
   <!-- Load JS after all DOM elements -->
-  <script src="/static/network_logic.js"></script>
+<script src="/static/network_logic.js"></script>
 </body>
 </html>
