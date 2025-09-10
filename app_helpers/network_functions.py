@@ -25,12 +25,17 @@ def generate_dummy_df(n_sessions=100, min_pages_per_session=2, max_pages_per_ses
     seed(seed_value)
     np.random.seed(seed_value)
 
+    # define start and end dates for sessions
+    start_date = pd.to_datetime("2023-01-01")
+    end_date = pd.to_datetime("2023-12-31")
+
     # Fake hierarchical URL fragments to construct full URLs
     if url_sample is None:
         url_sample = helpers.url_sample
     
+    # Use Dirichlet distribution to generate probabilities of choosing each URL
     if choice_prob is None:
-        choice_prob = dirichlet.rvs(poisson.rvs(20, size=len(url_sample)))[0]
+        choice_prob = dirichlet.rvs(poisson.rvs(200, size=len(url_sample)))[0]
     elif isinstance(choice_prob, (list, np.ndarray)):
         if len(choice_prob) != len(url_sample):
             raise ValueError("Length of choice_prob must match length of url_sample")
@@ -54,13 +59,17 @@ def generate_dummy_df(n_sessions=100, min_pages_per_session=2, max_pages_per_ses
         # Simulate time spent (e.g., exponential time-on-page)
         chrono = np.round(np.random.exponential(scale=20, size=session_length), 2)
         
+        # construct random date column
+        random_days = randint(0, (end_date - start_date).days)
+        random_date = start_date + timedelta(days=random_days)
 
         sessions.append({
             "session_id": session_id,
             "url_path": url_path,
             "chrono": list(chrono),
             "url_node": url_node,
-            "device": "desktop" if randint(0, 1) == 0 else "mobile"
+            "device": "desktop" if randint(0, 1) == 0 else "mobile",
+            "date": random_date
         })
     
     return pd.DataFrame(sessions)
