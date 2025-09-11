@@ -20,6 +20,10 @@
   <!-- noUiSlider -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.css">
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
+  
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 </head>
 
@@ -59,31 +63,37 @@
 
   <div id="side-panel">
 
-  <div id="info-box" class="info-panel">
-    <h3>Shortest paths Info</h3>
-    <div class="content"></div>
-  </div>
-
-  <div id="hover-box" class="info-panel">
-    <h3>Hover Info</h3>
-    <div class="content"></div>
-  </div>
-
-  <div id="table-container">
-      <h3>Nodes Summary Table Info</h3>
-      <table id="summary-table" class="display compact" style="width: 100%;">
-        <thead>
-          <tr>
-            <th>Node</th>
-            <th>AvgAbs</th>
-            <th>Total</th>
-            <th>AvgRel</th>
-            <th>Flow</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div id="info-box" class="info-panel">
+      <h3>Shortest paths Info</h3>
+      <div class="content"></div>
     </div>
+
+    <div id="hover-box" class="info-panel">
+      <h3>Hover Info</h3>
+      <div class="content"></div>
+    </div>
+
+    <div id="table-container">
+        <h3>Nodes Summary Table Info</h3>
+        <table id="summary-table" class="display compact" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>AvgAbs</th>
+              <th>Total</th>
+              <th>AvgRel</th>
+              <th>Flow</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 12px;">
+      <h3>Metric Over Time</h3>
+      <canvas id="time-chart"></canvas>
+      </div>
+
   </div>
 </div>
 

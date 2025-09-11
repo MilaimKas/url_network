@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 import pandas as pd
+import numpy as np
 from app_helpers import network_class, network_functions
 from flask_caching import Cache
 from datetime import datetime
@@ -31,7 +32,7 @@ def get_network(device, start_date=None, end_date=None, time_granularity='Week')
     #df = fetch_data(start_date, end_date, device) # placeholder for actual data fetching logic
 
     # generate random data
-    df = network_functions.generate_dummy_df(n_sessions=1000, max_pages_per_session=10)
+    df = network_functions.generate_dummy_df(n_sessions=5000, max_pages_per_session=10)
 
     # filter
     df_filtered = df[df['device'] == device]
@@ -61,8 +62,6 @@ def graph():
 
     # get  network object from cache or build it
     W = get_network(device)
-
-    print(date_str)
     
     if date_str == "All time" or not date_str:
         return jsonify(W.to_cytoscape_json(node_size_range=(5, 20), edge_width_range=(0.1, 5)))
@@ -124,7 +123,34 @@ def shortest_path():
     except Exception as e:
         print(f"Getting error wile formating into json: {e}")
         return jsonify({"paths": [], "message": str(e)})
+
+@app.route("/graph-metrics")
+def graph_metrics():
+
+    device = request.args.get("device")
+    metric = request.args.get("metric", "entropy")
     
+    W = get_network(device)
+
+    metrics = []
+
+    for date, G in sorted(W.graphs_by_date.items()):
+        weights = [attr.get("weight", 0) for _, _, attr in G.edges(data=True)]
+        total = sum(weights)
+
+        if total > 0:
+            p = np.array(weights) / total
+            H = -np.sum(p * np.log2(p))
+        else:
+            H = 0
+
+        metrics.append({
+            "date": date.isoformat(),
+            "value": round(H, 4)
+        })
+        
+    return jsonify(metrics)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

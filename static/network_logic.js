@@ -345,8 +345,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function hideInfoBox() {
-    document.querySelector('#hover-box .content').innerHTML = "";
+        document.querySelector('#hover-box .content').innerHTML = "";
     }
+
+    function plotMetric(metric = "entropy") {
+        fetch(`/graph-metrics?device=${deviceSelector.value}&metric=${metric}`)
+            .then(res => res.json())
+            .then(data => {
+                const ctx = document.getElementById('time-chart').getContext('2d');
+                const labels = data.map(d => d.date);
+                const values = data.map(d => d.value);
+
+                if (window.metricChart) {
+                    window.metricChart.destroy();
+                }
+
+                window.metricChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `${metric} over time`,
+                            data: values,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.2,
+                            pointRadius: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                ticks: { maxRotation: 45, minRotation: 45 }
+                            },
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
 
     // === CONTROL EVENTS ===
     deviceSelector.addEventListener('change', () => loadGraph(deviceSelector.value));
@@ -383,4 +423,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === INITIALIZE ===
     loadGraph(deviceSelector.value);
+    plotMetric("entropy")
 });
