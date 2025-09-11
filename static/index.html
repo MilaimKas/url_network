@@ -16,6 +16,11 @@
   <!-- jQuery + DataTables JS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+  <!-- noUiSlider -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
+
 </head>
 
 <body>
@@ -32,18 +37,20 @@
       <option value="domain">Domain-only</option>
     </select>
 
-    Weight Threshold:
-    <input type="range" id="weight-threshold" min="0" max="20" step="1" value="0">
-    <span id="threshold-value">0</span>
+    <!-- Weight threshold range slider -->
+    <div id="slider-wrapper">
+      <label for="weight-range-slider">Weight:</label>
+      <div id="weight-range-slider"></div>
+      <span id="range-min">0</span>–<span id="range-max">?</span>
+    </div>
+    
+    <div id="date-control">
+    Date:
+    <input type="range" id="date-slider" min="0" max="0" value="0">
+    <span id="date-display"></span>
+    </div>
 
     <button id="clear-selection">Clear Selection</button>
-
-  <div id="date-control">
-  Date:
-  <input type="range" id="date-slider" min="0" max="0" value="0">
-  <span id="date-display"></span>
-  </div>
-
 
   </div>
 
@@ -51,9 +58,19 @@
   <div id="cy"></div>
 
   <div id="side-panel">
-    <div id="info-box"></div>
 
-    <div id="table-container">
+  <div id="info-box" class="info-panel">
+    <h3>Shortest paths Info</h3>
+    <div class="content"></div>
+  </div>
+
+  <div id="hover-box" class="info-panel">
+    <h3>Hover Info</h3>
+    <div class="content"></div>
+  </div>
+
+  <div id="table-container">
+      <h3>Nodes Summary Table Info</h3>
       <table id="summary-table" class="display compact" style="width: 100%;">
         <thead>
           <tr>

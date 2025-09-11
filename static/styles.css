@@ -6,13 +6,27 @@ body {
 }
 
 #controls {
-    padding: 16px 24px;
-    background: #111;
-    color: #eee;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    border-radius: 0 0 12px 12px;
-    margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
 }
+
+#slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 300px;
+  min-width: 250px;
+}
+
+#weight-range-slider {
+  flex-grow: 1;
+  width: 150px;
+  margin: 0;
+}
+
 
 /* Container layout */
 #main-content {
@@ -49,10 +63,27 @@ body {
   font-size: 13px;
 }
 
+#hover-box {
+  font-size: 13px;
+  padding: 8px;
+  margin-top: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid #444;
+  color: #ddd;
+  border-radius: 6px;
+}
+
+
 /* Table container */
 #table-container {
   flex: 1;
   overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid #444;
+  font-size: 13px;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 6px;
 }
 
 #summary-table {
@@ -70,8 +101,29 @@ body {
   color: white;
 }
 
+.info-panel {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid #888;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  color: #ddd;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 13px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.05);
+}
 
+.info-panel h3 {
+  margin-top: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ccc;
+  border-bottom: 1px solid #666;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
 
-
-
-
+.info-panel .content {
+  white-space: normal;
+  line-height: 1.4em;
+}

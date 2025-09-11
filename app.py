@@ -19,7 +19,7 @@ def available_dates():
     device = request.args.get('device', 'desktop')  # default to 'desktop'
 
     # Build WebNetwork object
-    W = get_network("2025", "2026", device) # dummy date for data fetching
+    W = get_network(device) # dummy date for data fetching
 
     if 'date' in W.df.columns:
         return jsonify(sorted(W.graphs_by_date.keys()))
@@ -27,7 +27,7 @@ def available_dates():
         return jsonify({"Message": "no date column found in data frame"})
 
 @cache.memoize(timeout=None)
-def get_network(start_date, end_date, device, time_granularity='Week'):
+def get_network(device, start_date=None, end_date=None, time_granularity='Week'):
     #df = fetch_data(start_date, end_date, device) # placeholder for actual data fetching logic
 
     # generate random data
@@ -60,9 +60,13 @@ def graph():
     #end_date = request.args.get('end_date', '2023-12-31')
 
     # get  network object from cache or build it
-    W = get_network("2025", "2026", device)
+    W = get_network(device)
 
-    if date_str:
+    print(date_str)
+    
+    if date_str == "All time" or not date_str:
+        return jsonify(W.to_cytoscape_json(node_size_range=(5, 20), edge_width_range=(0.1, 5)))
+    else:
         try:
             # Convert from ISO format or HTTP date string
             try:
@@ -82,9 +86,6 @@ def graph():
 
         return jsonify(W.to_cytoscape_json(navigation_graph=G, node_size_range=(5, 20), edge_width_range=(0.1, 5)))
     
-    else:
-        return jsonify(W.to_cytoscape_json(node_size_range=(5, 20), edge_width_range=(0.1, 5)))
-
 @app.route("/shortest-path")
 def shortest_path():
 
@@ -98,7 +99,7 @@ def shortest_path():
 
     print(f"Shortest path request: src={source}, dst={target}, intermediates={intermediates}")
 
-    W = get_network("2025", "2026", device)
+    W = get_network(device)
 
     # get max_paths shortest paths as dataframe with sum of weights along the path
     try:

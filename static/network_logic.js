@@ -1,14 +1,20 @@
+document.querySelector('#info-box .content').innerHTML = "...";
+document.querySelector('#hover-box .content').innerHTML = "...";
 document.addEventListener("DOMContentLoaded", () => {
     const cyContainer = document.getElementById('cy');
     const deviceSelector = document.getElementById('device-select');
     const networkTypeSelector = document.getElementById('network-type-select');
-    const weightSlider = document.getElementById('weight-threshold');
-    const thresholdLabel = document.getElementById('threshold-value');
     const infoBox = document.getElementById('info-box');
+    const sliderElem = document.getElementById('weight-range-slider');
+
 
     let cy = null;
     let selectedNodes = [];
     let currentNetworkType = networkTypeSelector.value;
+    let dateList = [];
+    let currentDateIndex = -1;
+    let globalMaxWeight = null;
+
 
     // === TABLE INIT ===
     const dataTable = $('#summary-table').DataTable({
@@ -25,16 +31,18 @@ document.addEventListener("DOMContentLoaded", () => {
         ]
     });
 
-    let dateList = [];  // global
-    let currentDateIndex = -1;  // -1 means "no date filter"
-
+    // === Get all time period as start date ===
     fetch("/available-dates")
         .then(res => res.json())
         .then(data => {
             dateList = data;
+
             const slider = document.getElementById("date-slider");
-            slider.max = data.length - 1;
-            slider.value = data.length - 1;  // default: latest
+            const totalOptions = dateList.length + 1;  // +1 for "All time"
+
+            slider.max = totalOptions - 1;
+            slider.value = totalOptions - 1;
+
             document.getElementById("date-display").textContent = "All time";
         });
 
@@ -63,19 +71,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 initializeEventHandlers();
-                setWeightThresholdSlider();
+                if (date === null) {
+                setWeightThresholdSlider();  // only recompute on "All time"
+                }                
                 applyNetworkStyle();     // ✅ important
-                applyWeightThreshold(0);
+
+                if (sliderElem.noUiSlider) {
+                    const [min, max] = sliderElem.noUiSlider.get().map(v => Math.floor(v));
+                    applyWeightThresholdRange(min, max);
+                }
             });
     }
-
-
 
     // === STYLE SETUP ===
     function getGraphStyle() {
         return [
             {
-                selector: 'node',
+            selector: 'node',
                 style: {
                     'label': 'data(id)',
                     'background-color': 'rgba(0, 216, 255, 1)',
@@ -89,19 +101,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             },
             {
-                selector: 'edge[group = "domain"]',
+            selector: 'edge[group = "domain-backbone"]',
                 style: {
-                    'line-color': 'data(color)',
-                    'width': 'data(width)',
-                    'curve-style': 'bezier',
-                    'target-arrow-shape': 'triangle',
-                    'target-arrow-color': 'blue',
-                    'arrow-scale': 0.2,
-                    'target-arrow-fill': 'hollow'
+                    'line-color': '#444',
+                    'width': 0.5,
+                    'curve-style': 'straight',
+                    'opacity': 0.4,
+                    'z-index': 1,
+                    'target-arrow-shape': 'none'
                 }
             },
             {
-                selector: 'edge[group = "network"]',
+            selector: 'edge[group = "network"]',
                 style: {
                     'line-color': 'data(color)',
                     'width': 'data(width)',
@@ -113,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             },
             {
-                selector: 'edge.highlighted',
+            selector: 'edge.highlighted',
                 style: {
                     'line-color': 'rgba(0, 255, 0, 1)',
                     'width': 4,
@@ -123,44 +134,74 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             {
             selector: 'node.hovered',
-            style: {
-                'border-width': 6,
-                'border-color': 'rgba(52, 115, 70, 1)'
-            }
+                style: {
+                    'border-width': 6,
+                    'border-color': 'rgba(52, 115, 70, 1)'
+                }
             },
             {
             selector: 'node:selected',
-            style: {
-                'border-width': 6,
-                'border-color': 'rgba(237, 203, 6, 0.6)'
-            }
+                style: {
+                    'border-width': 6,
+                    'border-color': 'rgba(237, 203, 6, 0.6)'
+                }
             },
             {
-                selector: 'core',
+            selector: 'core',
                 style: { 'background-color': '#000000' }
             }
         ];
     }
 
-    // control edge visibility based on weight threshold    
-    function applyWeightThreshold(threshold) {
+    // control edge visibility based on weight threshold range    
+    function applyWeightThresholdRange(min, max) {
         if (!cy) return;
+
         cy.edges().forEach(edge => {
-            edge.style('display', edge.data('weight') >= threshold ? 'element' : 'none');
+            const group = edge.data('group');
+            const weight = edge.data('weight') || 0;
+
+            if (group === "network") {
+                const visible = weight >= min && weight <= max;
+                edge.style('display', visible ? 'element' : 'none');
+            } else {
+                edge.style('display', 'element');  // domain-backbone always visible
+            }
         });
     }
 
-    // set slider max based on max edge weight
+    // set slider max/min based on max edge weight
     function setWeightThresholdSlider() {
-        let maxWeight = 0;
-        cy.edges().forEach(edge => {
-            const w = edge.data('weight');
-            if (w > maxWeight) maxWeight = w;
-        });
+        if (globalMaxWeight === null) {
+            let maxWeight = 0;
+            cy.edges('[group="network"]').forEach(edge => {
+                const w = edge.data('weight');
+                if (w > maxWeight) maxWeight = w;
+            });
 
-        weightSlider.max = Math.ceil(maxWeight);
-        weightSlider.value = 0;
-        thresholdLabel.textContent = "0";
+            globalMaxWeight = Math.ceil(maxWeight);
+        }
+
+        const sliderElem = document.getElementById('weight-range-slider');
+
+        if (!sliderElem.noUiSlider) {
+            noUiSlider.create(sliderElem, {
+                start: [0, globalMaxWeight],
+                connect: true,
+                range: {
+                    min: 0,
+                    max: globalMaxWeight
+                },
+                step: 1,
+                tooltips: true
+            });
+
+            sliderElem.noUiSlider.on('update', function ([min, max]) {
+                document.getElementById('range-min').textContent = Math.floor(min);
+                document.getElementById('range-max').textContent = Math.ceil(max);
+                applyWeightThresholdRange(Math.floor(min), Math.ceil(max));
+            });
+        }
     }
 
     // update summary table with selected nodes
@@ -209,15 +250,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (selectedNodes.includes(id)) {
                 selectedNodes = selectedNodes.filter(n => n !== id);
-                node.unselect();  // ✅ fix here
+                node.unselect();
             } else {
                 selectedNodes.push(id);
-                node.select();    // ✅ uses :selected style
+                node.select();    
             }
 
             if (selectedNodes.length === 2) {
                 const [src, dst] = selectedNodes;
-                selectedNodes.forEach(n => cy.getElementById(n).unselect());  // ✅ fix here
+                selectedNodes.forEach(n => cy.getElementById(n).unselect());
                 selectedNodes = [];
                 getShortestPaths(src, dst);
             }
@@ -262,13 +303,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 allPathEdges.forEach(e => e.addClass('highlighted'));
 
-                infoBox.innerHTML = `
-                    <strong>${data.paths.length} shortest paths from ${source} → ${target}</strong><br><br>
-                    ${data.paths.map((p, i) =>
-                        `<strong>Path ${i + 1}:</strong> ${p.path.join(' → ')}<br>Score: ${p.score_abs.toFixed(2)}`
-                    ).join('<br><br>')}
+                document.querySelector('#info-box .content').innerHTML = `
+                <strong>${data.paths.length} shortest paths from ${source} → ${target}</strong><br><br>
+                ${data.paths.map((p, i) =>
+                    `<strong>Path ${i + 1}:</strong> ${p.path.join(' → ')}<br>Score: ${p.score_abs.toFixed(2)}`
+                ).join('<br><br>')}
                 `;
-                infoBox.style.display = 'block';
+
             })
             .catch(err => {
                 console.error("Error fetching shortest path:", err);
@@ -284,16 +325,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showEdgeInfo(edge) {
         const data = edge.data();
-        infoBox.innerHTML = `
+        document.querySelector('#hover-box .content').innerHTML = `
             <strong>Edge: ${data.source} → ${data.target}</strong><br>
             Weight: ${data.weight || 'n/a'}
         `;
-        infoBox.style.display = 'block';
     }
 
     function showNodeInfo(node) {
         const data = node.data();
-        infoBox.innerHTML = `
+        document.querySelector('#hover-box .content').innerHTML = `
             <strong>Node: ${data.id}</strong><br>
             <br>    
             AvgAbs: ${data.AvgAbs?.toFixed(2) || 'n/a'}s<br>
@@ -302,11 +342,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <br>
             Flow: ${data.flow?.toFixed(2) || 'n/a'}<br> 
         `;
-        infoBox.style.display = 'block';
     }
 
     function hideInfoBox() {
-        infoBox.style.display = 'none';
+    document.querySelector('#hover-box .content').innerHTML = "";
     }
 
     // === CONTROL EVENTS ===
@@ -314,12 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
     networkTypeSelector.addEventListener('change', () => {
         currentNetworkType = networkTypeSelector.value;
         applyNetworkStyle();
-    });
-
-    weightSlider.addEventListener('input', () => {
-        const threshold = parseInt(weightSlider.value);
-        thresholdLabel.textContent = threshold;
-        applyWeightThreshold(threshold);
     });
 
     document.getElementById('clear-selection').addEventListener('click', () => {
@@ -333,16 +366,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const index = parseInt(e.target.value);
         currentDateIndex = index;
 
-        const selected = dateList[index];
-
         const dateDisplay = document.getElementById("date-display");
-        if (index === dateList.length - 1) {
-            dateDisplay.textContent = "All time";
-        } else {
-            dateDisplay.textContent = selected;
-        }
 
-        loadGraph(deviceSelector.value, selected);
+        if (index === dateList.length) {
+            dateDisplay.textContent = "All time";
+            loadGraph(deviceSelector.value, null);
+        } else {
+            const selected = dateList[index];
+            dateDisplay.textContent = selected;
+            loadGraph(deviceSelector.value, selected);
+        }
     });
 
 

@@ -27,7 +27,7 @@ def generate_dummy_df(n_sessions=100, min_pages_per_session=2, max_pages_per_ses
 
     # define start and end dates for sessions
     start_date = pd.to_datetime("2023-01-01")
-    end_date = pd.to_datetime("2023-12-31")
+    end_date = pd.to_datetime("2023-03-01")
 
     # Fake hierarchical URL fragments to construct full URLs
     if url_sample is None:

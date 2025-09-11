@@ -346,7 +346,6 @@ class WebNetwork:
 
         return df
 
-
     def info_node(self, sort_by="total_time"):
         """
         returns a df with nodes as index and attributes
@@ -545,6 +544,7 @@ class WebNetwork:
         """
 
         domain_graph = self.domain
+
         if navigation_graph is None:
             navigation_graph = self.current_navigation_network
         
@@ -567,9 +567,9 @@ class WebNetwork:
                 G.add_node(node, size=node_size_range[0])
 
         # Add all domain edges not present in navigation
-        for u, v in domain_graph.edges:
-            if not G.has_edge(u, v):
-                G.add_edge(u, v, group="domain", weight=1e-6, widths=edge_width_range[0])
+        #for u, v in domain_graph.edges:
+        #    if not G.has_edge(u, v):
+        #        G.add_edge(u, v, group="domain", weight=1e-6, widths=edge_width_range[0])
 
         # Export to cytoscape
         data = json_graph.cytoscape_data(G)
@@ -605,35 +605,54 @@ class WebNetwork:
                         f"Flow: {flow}</br>"
                         )
 
-
         # Normalize weights to 0-1 for color mapping
-        all_weights = [d["weight"] for d in G.edges.values()]
+        all_weights = [d["weight"] for d in self.current_navigation_network.edges.values()] # take weight from global navigation  graph
         norm = mcolors.Normalize(vmin=min(all_weights), vmax=max(all_weights))
         cmap_network = cm.get_cmap("Reds") 
-        cmap_domain = cm.get_cmap("Blues")  
 
         # edge infos
         for edge in data["elements"]["edges"]:
-        # add edge and arrow widths and groups
+        # add edge target, source and group
             source = edge["data"]["source"]
             target = edge["data"]["target"]
-            group = edge_widths_df.get("group", "domain").get((source, target), "domain")
-            edge["data"]["group"] = group
+            #group = edge_widths_df.get("group", "domain").get((source, target), "domain")
+            edge["data"]["group"] = "network"
+            # weigth and  width
             width = edge_widths_df.get("widths", edge_width_range[0]).get((source, target), edge_width_range[0])
             edge["data"]["width"] = safe_float(width, default=edge_width_range[0])
             weight = safe_float(edge_widths_df.get("weight").get((source, target), 0), 0)
+            # hover info
             edge["data"]["title"] = (
                                     f"<strong>{source} → {target}</strong><br>"
                                     f"Weight: {weight}"
                                 )
             # add color gradient based on weight
-            if group == "network":
-                rgba = cmap_network(norm(weight))
-            else:
-                rgba = cmap_domain(norm(weight))
+            rgba = cmap_network(norm(weight))
             r, g, b, a = rgba  # a is already the normalized opacity from colormap
             rgba_css = f"rgba({int(r*255)}, {int(g*255)}, {int(b*255)}, {a:.2f})"
             edge["data"]["color"] = rgba_css
+
+        # Append domain backbone edges as a visual layer
+        domain_backbone_edges = []
+
+        for u, v in domain_graph.edges:
+            #if navigation_graph.has_edge(u, v):
+            #    continue  # skip — already covered as navigation edge
+            edge = {
+                "data": {
+                    "id": f"domain-backbone-{u}-{v}",
+                    "source": u,
+                    "target": v,
+                    "group": "domain-backbone",
+                    "weight": 0,
+                    "color": "rgba(150,150,150,0.4)",
+                    "title": f"<strong>{u} → {v}</strong><br>(domain backbone)"
+                }
+            }
+            domain_backbone_edges.append(edge)
+
+        # Append them to the Cytoscape export
+        data["elements"]["edges"].extend(domain_backbone_edges)
 
         return data
 
