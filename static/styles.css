@@ -1,38 +1,71 @@
-
 body {
     margin: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #000;  /* Will be behind the cytoscape canvas */
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(180deg, #0b1220 0%, #071028 60%);
+    color: #e6eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
 }
 
+/* Header added in HTML */
+#app-header {
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 2px 8px rgba(2,6,23,0.6);
+}
+
+/* controls */
 #controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
+/* select & button aesthetics */
+#controls select, #controls button {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e6eef6;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: all .12s ease;
+}
+#controls select:focus, #controls button:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+}
+#clear-selection {
+  cursor: pointer;
+  background: linear-gradient(180deg,#ff6b6b,#ff4c4c);
+  border: none;
+  color: white;
+  font-weight:600;
+}
+
+/* slider wrapper */
 #slider-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: 300px;
-  min-width: 250px;
+  gap: 10px;
+  max-width: 360px;
+  min-width: 240px;
 }
-
 #weight-range-slider {
   flex-grow: 1;
-  width: 150px;
-  margin: 0;
+  height: 34px;
+  margin: 0 8px;
 }
-
 
 /* Container layout */
 #main-content {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 60px); /* minus space for controls */
+  height: calc(100vh - 116px); /* header + controls */
 }
 
 /* Cytoscape canvas */
@@ -40,7 +73,8 @@ body {
   flex: 3;
   min-width: 0;
   height: 100%;
-  border-right: 1px solid #333;
+  border-right: 1px solid rgba(255,255,255,0.03);
+  background: linear-gradient(180deg, rgba(6,13,22,0.6), rgba(3,7,12,0.6));
 }
 
 /* Side panel */
@@ -48,82 +82,90 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #1a1a1a;
-  color: white;
-  padding: 10px;
+  background: linear-gradient(180deg,#071428, #081021);
+  color: #e6eef6;
+  padding: 14px;
   overflow-y: auto;
+  gap: 10px;
 }
 
 /* Info box */
-#info-box {
-  margin-bottom: 10px;
-  padding: 10px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 1px solid #444;
+.info-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 12px;
+  color: #dbeafe;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.6);
   font-size: 13px;
 }
-
-#hover-box {
-  font-size: 13px;
-  padding: 8px;
-  margin-top: 8px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 1px solid #444;
-  color: #ddd;
-  border-radius: 6px;
+.info-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #cfe8ff;
+  font-weight: 600;
 }
 
+/* Hover box */
+#hover-box .content {
+  color: #d7eaff;
+  font-size: 13px;
+}
 
 /* Table container */
 #table-container {
-  flex: 1;
   overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 1px solid #444;
-  font-size: 13px;
-  padding: 8px;
-  margin-top: 8px;
-  border-radius: 6px;
-}
-
-#summary-table {
-  color: white !important;
-  font-size: 13px;
-}
-
-#summary-table_wrapper {
-  overflow-x: auto;
-}
-
-#date-control {
-  padding: 10px;
-  background-color: #222;
-  color: white;
-}
-
-.info-panel {
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid #888;
+  background: transparent;
   border-radius: 8px;
-  padding: 12px;
-  margin-top: 12px;
-  color: #ddd;
-  font-family: 'Segoe UI', sans-serif;
+  padding: 6px;
+}
+#summary-table {
+  color: #e6eef6 !important;
   font-size: 13px;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.05);
+  width: 100% !important;
+}
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  color: #cbd5e1;
 }
 
-.info-panel h3 {
-  margin-top: 0;
-  font-size: 15px;
+/* DataTable rows */
+#summary-table tbody tr {
+  background: rgba(255,255,255,0.01);
+}
+#summary-table thead th {
+  background: rgba(255,255,255,0.03);
+  color: #e6eef6;
   font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #666;
-  padding-bottom: 4px;
-  margin-bottom: 8px;
 }
 
-.info-panel .content {
-  white-space: normal;
-  line-height: 1.4em;
+/* date control */
+#date-control {
+  padding: 8px;
+  background: transparent;
+  color: #d1e8ff;
+  border-radius: 8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Chart canvas container */
+#time-chart {
+  max-width: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* small helpers */
+#range-min, #range-max {
+  font-weight:600;
+  color: #cfe8ff;
+}
+
+/* responsive tweaks */
+@media (max-width: 900px) {
+  #main-content { flex-direction: column; height: auto; }
+  #cy { height: 60vh; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.03); }
 }

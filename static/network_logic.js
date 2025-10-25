@@ -1,5 +1,5 @@
-document.querySelector('#info-box .content').innerHTML = "...";
-document.querySelector('#hover-box .content').innerHTML = "...";
+document.querySelector('#info-box .content').innerHTML = "Shift+click two nodes to compute shortest paths. Results appear here.";
+document.querySelector('#hover-box .content').innerHTML = "Hover nodes or edges to see details.";
 document.addEventListener("DOMContentLoaded", () => {
     const cyContainer = document.getElementById('cy');
     const deviceSelector = document.getElementById('device-select');
@@ -229,11 +229,14 @@ document.addEventListener("DOMContentLoaded", () => {
         cy.nodes().on('mouseover', evt => {
             evt.target.addClass('hovered');
             showNodeInfo(evt.target);
+            // show info panel (subtle)
+            document.getElementById('hover-box').style.boxShadow = '0 8px 20px rgba(0,0,0,0.6)';
         });
 
         cy.nodes().on('mouseout', evt => {
             evt.target.removeClass('hovered');
             hideInfoBox();
+            document.getElementById('hover-box').style.boxShadow = 'none';
         });
 
         // Edge hover → info panel
