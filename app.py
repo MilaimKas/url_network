@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 import pandas as pd
 import numpy as np
-from app_helpers import network_class, network_functions
+from app_helpers import network_class, network_functions, get_data
 from flask_caching import Cache
 from datetime import datetime
 from collections import defaultdict
@@ -37,7 +37,7 @@ def get_network(device, start_date=None, end_date=None, time_granularity='Week')
     #df = fetch_data(start_date, end_date, device) # placeholder for actual data fetching logic
 
     # generate random data
-    df = network_functions.generate_dummy_df(n_sessions=5000, max_pages_per_session=10)
+    df = get_data.generate_dummy_df(n_sessions=5000, max_pages_per_session=10)
 
     # filter
     df_filtered = df[df['device'] == device]
@@ -64,14 +64,13 @@ def graph():
     
     device = request.args.get('device', 'desktop')  # default to 'desktop'
     date_str = request.args.get('date', None)
-    #start_date = request.args.get('start_date', '2023-01-01')
-    #end_date = request.args.get('end_date', '2023-12-31')
+    lite = request.args.get('lite', '0') == '1'
 
     # get  network object from cache or build it
     W = get_network(device)
     
     if date_str == "All time" or not date_str:
-        return jsonify(W.to_cytoscape_json(node_size_range=(5, 20), edge_width_range=(0.1, 5)))
+        data = W.to_cytoscape_json(node_size_range=(5, 20), edge_width_range=(0.1, 5))
     else:
         try:
             # Convert from ISO format or HTTP date string
@@ -90,7 +89,15 @@ def graph():
         except KeyError:
             return jsonify({"elements": {"nodes": [], "edges": []}, "message": f"Key date {date_key} not found"})
 
-        return jsonify(W.to_cytoscape_json(navigation_graph=G, node_size_range=(5, 20), edge_width_range=(0.1, 5)))
+        data = W.to_cytoscape_json(navigation_graph=G, node_size_range=(5, 20), edge_width_range=(0.1, 5))
+
+    # lite mode: remove domain-backbone edges (visual-only) to reduce payload size
+    if lite:
+        edges = data.get("elements", {}).get("edges", [])
+        filtered = [e for e in edges if e.get("data", {}).get("group") != "domain-backbone"]
+        data["elements"]["edges"] = filtered
+
+    return jsonify(data)
     
 
 @app.route("/shortest-path")
@@ -167,7 +174,6 @@ def compute_time_series_metrics(device: str):
         results["degree_std"].append({"date": d_str, "value": round(metric_dict["degree_std"], 4)})
         results["flow_std"].append({"date": d_str, "value": round(metric_dict["flow_std"], 4)})
         results["pagerank_entropy"].append({"date": d_str, "value": round(metric_dict["pagerank_entropy"], 4)})
-        results["nodes"].append({"date": d_str, "value": metric_dict["nodes"]})
         results["edges"].append({"date": d_str, "value": metric_dict["edges"]})
 
     print("Computed time series metrics for all dates. Caching results.")
