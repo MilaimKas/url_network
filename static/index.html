@@ -63,6 +63,20 @@
     <span id="date-display"></span>
     </div>
 
+    <div id="metric-selector" style="margin-top: 12px;">
+    <label for="metric-select">Select Metric:</label>
+    <select id="metric-select">
+      <option value="entropy">Entropy</option>
+      <option value="modularity">Modularity</option>
+      <option value="largest_component">Largest Component</option>
+      <option value="degree_mean">Degree Mean</option>
+      <option value="degree_std">Degree Std</option>
+      <option value="flow_std">Flow Std</option>
+      <option value="pagerank_entropy">Pagerank Entropy</option>
+      <option value="edges">Edge Count</option>
+    </select>
+    </div>
+
     <button id="clear-selection">Clear Selection</button>
 
   </div>
