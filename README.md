@@ -10,6 +10,7 @@ It is a prototype that is thought as a collaborative project between data scient
 - Shortest path highlighting between nodes
 - Weight threshold slider for edge filtering
 - Hover tooltips for nodes and edges
+- time dependent visualization of network metrics
 
 ## Setup
 1. Install Python dependencies:
@@ -28,7 +29,7 @@ It is a prototype that is thought as a collaborative project between data scient
 - `static/` - Frontend files (HTML, JS, CSS)
 
 ## Customization
-- Adjust data generation or connect to real data in `app_helpers/network_functions.py`
+- Adjust data generation or connect to real data in `app_helpers/get_data.py`
 - Modify network logic in `app_helpers/network_class.py`
 - Update frontend UI in `static/dashboard.html` and `static/network_logic.js`
 
