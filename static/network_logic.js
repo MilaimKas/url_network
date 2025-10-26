@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let dateList = [];
     let currentDateIndex = -1;
     let globalMaxWeight = null;
+    let allMetricsCache = null;
 
 
     // === TABLE INIT ===
@@ -80,7 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const [min, max] = sliderElem.noUiSlider.get().map(v => Math.floor(v));
                     applyWeightThresholdRange(min, max);
                 }
-            });
+        });
+
+        fetchAllMetricsOnce().then(() => {
+            plotMetric('entropy');
+        });
+
     }
 
     // === STYLE SETUP ===
@@ -351,33 +357,57 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('#hover-box .content').innerHTML = "";
     }
 
-    function plotMetric(metric) {
-        fetch(`/graph-metrics?device=${deviceSelector.value}`)
+    function fetchAllMetricsOnce() {
+        return fetch(`/graph-metrics?device=${deviceSelector.value}`)
             .then(res => res.json())
-            .then(allMetrics => {
-                const data = allMetrics[metric];
-                const ctx = document.getElementById('metric-chart').getContext('2d');
-
-                const labels = data.map(d => d.date);
-                const values = data.map(d => d.value);
-
-                if (window.metricChart) window.metricChart.destroy();
-
-                window.metricChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: metric,
-                            data: values,
-                            borderColor: 'rgba(255, 204, 0, 0.9)',
-                            backgroundColor: 'rgba(255, 204, 0, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        }]
-                    }
-                });
+            .then(data => {
+            allMetricsCache = data;
+            return data;
             });
+    }
+
+    function plotMetric(metric) {
+        if (!allMetricsCache || !allMetricsCache[metric]) return;
+
+        const data = allMetricsCache[metric];
+        const ctx = document.getElementById('metric-chart').getContext('2d');
+        const labels = data.map(d => d.date);
+        const values = data.map(d => d.value);
+
+        if (window.metricChart) {
+            window.metricChart.destroy();
+        }
+
+        window.metricChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+            labels: labels,
+            datasets: [{
+                label: metric,
+                data: values,
+                borderColor: 'rgba(255, 204, 0, 0.9)',
+                backgroundColor: 'rgba(255, 204, 0, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2
+            }]
+            },
+            options: {
+            scales: {
+                x: {
+                title: { display: true, text: "Date" },
+                ticks: { maxRotation: 45, minRotation: 45 }
+                },
+                y: {
+                title: { display: true, text: metric },
+                beginAtZero: false
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+            }
+        });
     }
 
    
@@ -386,6 +416,11 @@ document.addEventListener("DOMContentLoaded", () => {
     networkTypeSelector.addEventListener('change', () => {
         currentNetworkType = networkTypeSelector.value;
         applyNetworkStyle();
+    });
+
+    document.getElementById('metric-select').addEventListener('change', (e) => {
+        const selectedMetric = e.target.value;
+        plotMetric(selectedMetric);
     });
 
     document.getElementById('clear-selection').addEventListener('click', () => {
