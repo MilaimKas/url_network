@@ -100,7 +100,7 @@ class WebNetwork:
     # functions to update or change domain
     ####################################################################################################
 
-    def update_pos(self, method=["energy"], scale=200, **kwargs):
+    def update_pos(self, method="energy", scale=200, **kwargs):
         """
         using Fruchterman-Reingold force-directed algorithm to calculate nodes position using only the domain edges
         """
