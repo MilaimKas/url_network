@@ -133,6 +133,12 @@ def shortest_path():
         return jsonify({"paths": [], "message": str(e)})
 
 
+@app.route("/graph-metrics")
+def graph_metrics():
+    device = request.args.get("device", "desktop")
+    return jsonify(compute_time_series_metrics(device))
+
+
 @cache.memoize(timeout=None)
 def compute_time_series_metrics(device: str):
     """
@@ -160,10 +166,11 @@ def compute_time_series_metrics(device: str):
         results["degree_mean"].append({"date": d_str, "value": round(metric_dict["degree_mean"], 4)})
         results["degree_std"].append({"date": d_str, "value": round(metric_dict["degree_std"], 4)})
         results["flow_std"].append({"date": d_str, "value": round(metric_dict["flow_std"], 4)})
-        results["pagerank_entropy"].append({"date": d_str, "value": round(metric_dict["pr_entropy"], 4)})
-        results["nodes"].append({"date": d_str, "value": metric_dict["node_count"]})
-        results["edges"].append({"date": d_str, "value": metric_dict["edge_count"]})
+        results["pagerank_entropy"].append({"date": d_str, "value": round(metric_dict["pagerank_entropy"], 4)})
+        results["nodes"].append({"date": d_str, "value": metric_dict["nodes"]})
+        results["edges"].append({"date": d_str, "value": metric_dict["edges"]})
 
+    print("Computed time series metrics for all dates. Caching results.")
     return results
 
 
