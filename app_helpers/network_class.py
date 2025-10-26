@@ -100,7 +100,7 @@ class WebNetwork:
     # functions to update or change domain
     ####################################################################################################
 
-    def update_pos(self, method="energy", scale=200, **kwargs):
+    def update_pos(self, method=["energy"], scale=200, **kwargs):
         """
         using Fruchterman-Reingold force-directed algorithm to calculate nodes position using only the domain edges
         """
@@ -164,6 +164,9 @@ class WebNetwork:
 
     def build_graphs_by_date(self, date_col='date', time_granularity="Week"):
         
+        if  self.df is None:
+            raise ValueError("No data frame found in WebNetwork object to build graphs by date")
+        
         if not 'date' in self.df.columns:
             raise KeyError("Prodivided data frame must contain the column 'date'")
         
@@ -208,6 +211,8 @@ class WebNetwork:
         print("Creating navigation graph from DataFrame...")
 
         if df is None:
+            if  self.df is None:
+                raise ValueError("No data frame found in WebNetwork object to create network")
             df = self.df.copy()
         
         if G is None:
@@ -240,6 +245,8 @@ class WebNetwork:
             G = self.current_navigation_network
 
         if df is None:
+            if self.df is None:
+                raise ValueError("No data frame found in WebNetwork object to add time weight")
             df = self.df.copy()
 
         if "url_node" not in df.columns:
@@ -287,11 +294,16 @@ class WebNetwork:
         if G is None:
             G = self.current_navigation_network
 
-        edges_to_remove = [(u,v) for u,v in G.edges() if G[u][v]["weight"] >= self.max_path_weight-thres]
+        if self.max_path_weight is None and self.df is not None:
+            max_path_weight = len(self.df)
+        elif self.max_path_weight is not None:
+            max_path_weight = self.max_path_weight
+        
+        edges_to_remove = [(u,v) for u,v in G.edges() if G[u][v]["weight"] >= max_path_weight-thres]
         G.remove_edges_from(edges_to_remove)
 
 
-    def reset_nodes_att(self, G=None):
+    def reset_nodes_att(self, G: nx.Graph | None=None):
         """
         reset node attributes to 0 for avg_rel_time, avg_abs_time, total_time and std_time
         """
@@ -299,14 +311,15 @@ class WebNetwork:
         if G is None:
             G = self.current_navigation_network
 
-        nx.set_node_attributes(G, values = 0, name = "avg_rel_time") 
-        nx.set_node_attributes(G, values = 0, name = "avg_abs_time")
-        nx.set_node_attributes(G, values = 0, name = "total_time")
-        nx.set_node_attributes(G, values = 0, name = "std_abs_time")
-        nx.set_node_attributes(G, values = 0, name = "std_rel_time")
+        values = {n: 0 for n in G.nodes}
+        nx.set_node_attributes(G, values = values, name = "avg_rel_time") 
+        nx.set_node_attributes(G, values = values, name = "avg_abs_time")
+        nx.set_node_attributes(G, values = values, name = "total_time")
+        nx.set_node_attributes(G, values = values, name = "std_abs_time")
+        nx.set_node_attributes(G, values = values, name = "std_rel_time")
 
         
-    def reset_edge_att(self, G=None, ini_weight=None):
+    def reset_edge_att(self, G=None, ini_weight:float|None=None):
         """
         reset edge attributes to 0 for weight and group
         """
@@ -315,9 +328,9 @@ class WebNetwork:
             G = self.current_navigation_network
         if ini_weight is None:
             ini_weight = 0
-
-        nx.set_edge_attributes(G, values = ini_weight, name = "weight")
-        nx.set_edge_attributes(G, values = None, name = "group")
+        
+        nx.set_edge_attributes(G, values = {n: ini_weight for n in G.nodes}, name = "weight")
+        nx.set_edge_attributes(G, values = {n: None for n in G.nodes} , name = "group")
 
 
     # Analysis of network
@@ -374,7 +387,7 @@ class WebNetwork:
         using entry_page_weight attribute as weight
         """
 
-        if G is None:
+        if not G:
             G=self.current_navigation_network.copy()
         
         # remove unused edges
@@ -409,7 +422,7 @@ class WebNetwork:
             G = self.current_navigation_network
         
         if shift is None:
-            shift = self.max_path_weight
+            shift = self.max_path_weight or 0
 
         return get_flow(G, B, "weight", shift=shift)
 
@@ -582,12 +595,12 @@ class WebNetwork:
                 node["position"] = {"x": float(x), "y": float(y)}
             else:
                 raise ValueError(f"Node {node_id} not found in position dictionary.")
-            node["data"]["size"] = safe_float(node_sizes_df.get("node_size", node_size_range[0]).get(node_id), node_size_range[0])
+            node["data"]["size"] = safe_float(node_sizes_df["node_size"].get(node_id), node_size_range[0])
             # Add tooltip info
-            avg = safe_float(node_sizes_df.get("avg_abs_time").get(node_id, 0), 0)
-            total = safe_float(node_sizes_df.get("total_time").get(node_id, 0), 0)
-            avgrel = safe_float(node_sizes_df.get("avg_rel_time", 0).get(node_id, 0), 0)
-            flow = safe_float(node_flow_df.get("flow", 0).get(node_id, 0), 0)
+            avg = safe_float(node_sizes_df["avg_abs_time"].get(node_id, 0), 0)
+            total = safe_float(node_sizes_df["total_time"].get(node_id, 0), 0)
+            avgrel = safe_float(node_sizes_df["avg_rel_time"].get(node_id, 0), 0)
+            flow = safe_float(node_flow_df["flow"].get(node_id, 0), 0)
             node["data"]["AvgAbs"] = avg
             node["data"]["Total"] = total
             node["data"]["AvgRel"] = avgrel
@@ -618,9 +631,9 @@ class WebNetwork:
             #group = edge_widths_df.get("group", "domain").get((source, target), "domain")
             edge["data"]["group"] = "network"
             # weigth and  width
-            width = edge_widths_df.get("widths", edge_width_range[0]).get((source, target), edge_width_range[0])
+            width = edge_widths_df["widths"].get((source, target), edge_width_range[0])
             edge["data"]["width"] = safe_float(width, default=edge_width_range[0])
-            weight = safe_float(edge_widths_df.get("weight").get((source, target), 0), 0)
+            weight = safe_float(edge_widths_df["weight"].get((source, target), 0), 0)
             # hover info
             edge["data"]["title"] = (
                                     f"<strong>{source} → {target}</strong><br>"

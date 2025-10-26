@@ -8,6 +8,9 @@ from datetime import timedelta
 import networkx as nx
 from app_helpers import helpers
 from scipy.stats import dirichlet, poisson
+from networkx.algorithms.community import greedy_modularity_communities
+
+
 
 def generate_dummy_df(n_sessions=100, min_pages_per_session=2, max_pages_per_session=6, url_sample=None, seed_value=42, choice_prob=None):
     """
@@ -74,8 +77,6 @@ def generate_dummy_df(n_sessions=100, min_pages_per_session=2, max_pages_per_ses
     
     return pd.DataFrame(sessions)
 
-
-#%%
 
 def info_edge(G, att_weight, shift=0):
     """
@@ -162,7 +163,6 @@ def get_shortest_k_path(A, B, att, G, C=None, shift=None, k=10):
     return pd.DataFrame(results, columns=["path", "score_abs", "score_norm"])
 
 
-
 def get_flow(G, B, att, shift=0):
     """
     return session flow through B
@@ -175,6 +175,7 @@ def get_flow(G, B, att, shift=0):
     flow_out = shift*len(list_out) - sum(list_out)
 
     return flow_in, flow_out
+
 
 def get_flow_nodes(G, att, shift=0):
     """
@@ -194,3 +195,61 @@ def get_flow_nodes(G, att, shift=0):
     df_tmp = df_tmp.sort_values(by="flow", key=abs, ascending=False).reset_index()
 
     return df_tmp 
+
+
+def compute_metrics(G):
+    """
+    Compute various network metrics on the given directed graph G.
+    Returns a dictionary of computed metrics.
+    """        
+    
+    # Filter for navigation edges
+    nav_edges = [(u, v) for u, v, a in G.edges(data=True) if a.get("group") == "network"]
+    nav_G = G.edge_subgraph(nav_edges).copy()
+
+    # 1. Entropy over edge weights
+    weights = np.array([G[u][v].get("weight", 0) for u, v in nav_edges])
+    weight_probs = weights / weights.sum()
+    entropy = -np.sum(weight_probs * np.log2(weight_probs + 1e-12))
+
+    # 2. Modularity (undirected view)
+    try:
+        communities = list(greedy_modularity_communities(nav_G.to_undirected()))
+        modularity = nx.algorithms.community.modularity(nav_G.to_undirected(), communities)
+    except:
+        modularity = 0
+
+    # 3. Largest weakly connected component
+    components = list(nx.weakly_connected_components(nav_G))
+    largest_component = max(len(c) for c in components) if components else 0
+
+    # 4. Degree statistics
+    degrees = [d for _, d in nav_G.degree()]
+    degree_mean = np.mean(degrees)
+    degree_std = np.std(degrees)
+
+    # 5. Node flow std
+    flow_df = get_flow_nodes(G=nav_G,  att="weight")
+    flow_std = flow_df["flow"].std()
+
+    # 6. Pagerank entropy (centralization measure)
+    pr = nx.pagerank(nav_G, alpha=0.85)
+    pr_values = np.array(list(pr.values()))
+    pr_probs = pr_values / pr_values.sum()
+    pr_entropy = -np.sum(pr_probs * np.log2(pr_probs + 1e-12))
+
+    # 7. Counts
+    node_count = nav_G.number_of_nodes()
+    edge_count = nav_G.number_of_edges()
+
+    return {
+        "entropy": entropy, 
+        "modularity": modularity, 
+        "largest_component": largest_component,
+        "degree_mean": degree_mean, 
+        "degree_std": degree_std, 
+        "flow_std": flow_std, 
+        "pagerank_entropy": pr_entropy,
+        "nodes": node_count,
+        "edges": edge_count
+    }
