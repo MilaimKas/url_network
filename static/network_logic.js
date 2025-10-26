@@ -1,12 +1,12 @@
 document.querySelector('#info-box .content').innerHTML = "Shift+click two nodes to compute shortest paths. Results appear here.";
 document.querySelector('#hover-box .content').innerHTML = "Hover nodes or edges to see details.";
 document.addEventListener("DOMContentLoaded", () => {
+
     const cyContainer = document.getElementById('cy');
     const deviceSelector = document.getElementById('device-select');
     const networkTypeSelector = document.getElementById('network-type-select');
     const infoBox = document.getElementById('info-box');
     const sliderElem = document.getElementById('weight-range-slider');
-
 
     let cy = null;
     let selectedNodes = [];
@@ -351,46 +351,36 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('#hover-box .content').innerHTML = "";
     }
 
-    function plotMetric(metric = "entropy") {
-        fetch(`/graph-metrics?device=${deviceSelector.value}&metric=${metric}`)
+    function plotMetric(metric) {
+        fetch(`/graph-metrics?device=${deviceSelector.value}`)
             .then(res => res.json())
-            .then(data => {
-                const ctx = document.getElementById('time-chart').getContext('2d');
+            .then(allMetrics => {
+                const data = allMetrics[metric];
+                const ctx = document.getElementById('metric-chart').getContext('2d');
+
                 const labels = data.map(d => d.date);
                 const values = data.map(d => d.value);
 
-                if (window.metricChart) {
-                    window.metricChart.destroy();
-                }
+                if (window.metricChart) window.metricChart.destroy();
 
                 window.metricChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: `${metric} over time`,
+                            label: metric,
                             data: values,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.2,
-                            pointRadius: 2
+                            borderColor: 'rgba(255, 204, 0, 0.9)',
+                            backgroundColor: 'rgba(255, 204, 0, 0.1)',
+                            fill: true,
+                            tension: 0.3
                         }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                ticks: { maxRotation: 45, minRotation: 45 }
-                            },
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
                     }
                 });
             });
     }
 
-
+   
     // === CONTROL EVENTS ===
     deviceSelector.addEventListener('change', () => loadGraph(deviceSelector.value));
     networkTypeSelector.addEventListener('change', () => {
