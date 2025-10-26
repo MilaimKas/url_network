@@ -203,44 +203,40 @@ def compute_metrics(G):
     Returns a dictionary of computed metrics.
     """        
     
-    # Filter for navigation edges
-    nav_edges = [(u, v) for u, v, a in G.edges(data=True) if a.get("group") == "network"]
-    nav_G = G.edge_subgraph(nav_edges).copy()
-
     # 1. Entropy over edge weights
-    weights = np.array([G[u][v].get("weight", 0) for u, v in nav_edges])
+    weights = np.array([G[u][v].get("weight", 0) for u, v in G.edges()])
     weight_probs = weights / weights.sum()
-    entropy = -np.sum(weight_probs * np.log2(weight_probs + 1e-12))
+    entropy = -np.sum(weight_probs * np.log2(weight_probs + 1e-12))/np.log2(len(weights) + 1e-12) # normalized entropy
 
     # 2. Modularity (undirected view)
     try:
-        communities = list(greedy_modularity_communities(nav_G.to_undirected()))
-        modularity = nx.algorithms.community.modularity(nav_G.to_undirected(), communities)
+        communities = list(greedy_modularity_communities(G.to_undirected()))
+        modularity = nx.algorithms.community.modularity(G.to_undirected(), communities)
     except:
         modularity = 0
 
     # 3. Largest weakly connected component
-    components = list(nx.weakly_connected_components(nav_G))
+    components = list(nx.weakly_connected_components(G))
     largest_component = max(len(c) for c in components) if components else 0
 
     # 4. Degree statistics
-    degrees = [d for _, d in nav_G.degree()]
+    degrees = [d for _, d in G.degree()]
     degree_mean = np.mean(degrees)
     degree_std = np.std(degrees)
 
     # 5. Node flow std
-    flow_df = get_flow_nodes(G=nav_G,  att="weight")
+    flow_df = get_flow_nodes(G=G,  att="weight")
     flow_std = flow_df["flow"].std()
 
     # 6. Pagerank entropy (centralization measure)
-    pr = nx.pagerank(nav_G, alpha=0.85)
+    pr = nx.pagerank(G, alpha=0.85)
     pr_values = np.array(list(pr.values()))
     pr_probs = pr_values / pr_values.sum()
-    pr_entropy = -np.sum(pr_probs * np.log2(pr_probs + 1e-12))
+    pr_entropy = -np.sum(pr_probs * np.log2(pr_probs + 1e-12))/np.log2(len(pr_values) + 1e-12)  # normalized entropy
 
     # 7. Counts
-    node_count = nav_G.number_of_nodes()
-    edge_count = nav_G.number_of_edges()
+    node_count = G.number_of_nodes()
+    edge_count = G.number_of_edges()
 
     return {
         "entropy": entropy, 
